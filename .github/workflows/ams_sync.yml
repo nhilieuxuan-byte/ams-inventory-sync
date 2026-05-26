@@ -1,53 +1,40 @@
 name: AMS Daily Inventory Sync
 
 on:
-  # Chạy tự động 08:00 giờ VN (UTC+7) = 01:00 UTC
   schedule:
     - cron: "0 1 * * *"
-
-  # Cho phép chạy thủ công từ tab Actions trên GitHub
   workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
-      # 1. Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Cài Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # 3. Cài Chrome + ChromeDriver (có sẵn trên ubuntu-latest)
       - name: Install Chrome
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q google-chrome-stable
           google-chrome --version
 
-      # 4. Cài thư viện Python
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # 5. Chạy scraper
       - name: Run scraper
         env:
-          AMS_EMAIL:                ${{ secrets.AMS_EMAIL }}
-          AMS_PASSWORD:             ${{ secrets.AMS_PASSWORD }}
-          SPREADSHEET_ID:           ${{ secrets.SPREADSHEET_ID }}
+          AMS_EMAIL: ${{ secrets.AMS_EMAIL }}
+          AMS_PASSWORD: ${{ secrets.AMS_PASSWORD }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
-          # Tuỳ chọn – ghi đè nếu cần:
-          # AMS_LOGIN_URL: https://ams.ssc.shopee.com/vn/login
-          # SHEET_NAME: AMS_Inventory
         run: python scraper.py
 
-      # 6. Upload screenshot nếu bị lỗi đăng nhập (giúp debug)
       - name: Upload error screenshot
         if: failure()
         uses: actions/upload-artifact@v4
